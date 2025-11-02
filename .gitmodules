@@ -1,0 +1,3 @@
+[submodule "lab_2/password-bot"]
+	path = lab_2/password-bot
+	url = https://github.com/IvanDrf/password-bot
