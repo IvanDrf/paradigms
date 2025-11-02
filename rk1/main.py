@@ -81,9 +81,10 @@ def main() -> None:
     # связь один ко многим
     one_to_many: list[tuple[str, Degree, str]] = [
         (teacher.name, teacher.academic_degree, department.name)
-        for department in departments
         for teacher in teachers
-        if teacher.department_id == department.id
+        for assignment in course_assignments
+        for department in departments
+        if teacher.id == assignment.teacher_id and department.id == assignment.department_id
     ]
 
     temp: list[tuple[str, int, int]] = [
