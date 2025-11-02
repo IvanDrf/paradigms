@@ -1,132 +1,152 @@
-type Version = int | str
+from enum import Enum
 
 
-class OS:
-    __slots__ = ('id', 'name', 'version')
+class Degree(Enum):
+    doctor = 'доктор'
+    candidate = 'кандидат'
+    scientist = 'ученый'
 
-    def __init__(self, id: int, name: str, version: Version) -> None:
+
+class Department:
+    __slots__ = ('id', 'name', 'faculty')
+
+    def __init__(self, id: int, name: str, faculty: str) -> None:
         self.id: int = id
         self.name: str = name
-        self.version: Version = version
+        self.faculty: str = faculty
 
 
-class Computer:
-    __slots__ = ('id', 'name', 'processor_name', 'os_id')
+class Teacher:
+    __slots__ = ('id', 'name', 'academic_degree', 'department_id')
 
-    def __init__(self, id: int, name: str, processor_name: str, os_id: int) -> None:
+    def __init__(self, id: int, name: str, academic_degree: Degree, department_id: int) -> None:
         self.id: int = id
         self.name: str = name
-        self.processor_name: str = processor_name
-        self.os_id: int = os_id
+        self.academic_degree: Degree = academic_degree
+        self.department_id: int = department_id
 
 
-class Server:
-    __slots__ = ('os_id', 'computer_id')
+class CourseAssignment:
+    __slots__ = ('department_id', 'teacher_id')
 
-    def __init__(self, os_id: int, computer_id: int) -> None:
-        self.os_id: int = os_id
-        self.computer_id: int = computer_id
+    def __init__(self, department_id: int, teacher_id: int) -> None:
+        self.department_id: int = department_id
+        self.teacher_id: int = teacher_id
 
 
-operating_systems: list[OS] = [
-    OS(1, 'Linux', 'Alpine'),
-    OS(2, 'Linux', 'Arch'),
-    OS(3, 'Linux', 'Fedora'),
-    OS(4, 'Windows', 11),
-    OS(5, 'Windows', 'XP'),
-    OS(6, 'Windows', 10)
+departments: list[Department] = [
+    Department(1, 'Математика', 'ФН'),
+    Department(2, 'Физика', 'ФН'),
+    Department(3, 'Программирование', 'ИУ'),
+    Department(4, 'История', 'Гуманитарный'),
+    Department(5, 'Литература', 'Гуманитарный'),
+    Department(6, 'Химия', 'Естественных наук')
 ]
 
-computers: list[Computer] = [
-    Computer(1, 'compA', 'Intel Core i5-3770', 1),
-    Computer(2, 'compB', 'Intel Core i7-3770 ', 3),
-    Computer(3, 'compC', 'Intel Core i5-3470', 4),
-    Computer(4, 'compD', 'Intel Core i7-3770', 6),
-    Computer(5, 'compE', 'Intel Xeon Silver', 2)
+teachers: list[Teacher] = [
+    # основные кафедры для препрдавателей
+
+    # математика
+    Teacher(1, 'Иванов', Degree.scientist, 1),
+    # математика
+    Teacher(2, 'Петрова', Degree.candidate, 1),
+    # физика
+    Teacher(3, 'Овечкин', Degree.scientist, 2),
+    # история
+    Teacher(4, 'Козлова', Degree.candidate, 4),
+    # программирование
+    Teacher(5, 'Николаев', Degree.doctor, 3)
 ]
 
-# на одном компьютере может быть несколько ос
-servers: list[Server] = [
-    Server(1, 1),
-    Server(1, 2),
-    Server(2, 3),
-    Server(3, 4),
-    Server(3, 5),
-    Server(4, 5),
-    Server(4, 2),
-    Server(6, 4),
-    Server(5, 2),
-    Server(6, 3),
+# один преподаватель может вести на в нескольких кафедрах
+course_assignments: list[CourseAssignment] = [
+    CourseAssignment(1, 1),
+
+    CourseAssignment(1, 2),
+    CourseAssignment(3, 2),
+    CourseAssignment(5, 2),
+
+    CourseAssignment(2, 3),
+    CourseAssignment(6, 3),
+
+    CourseAssignment(4, 4),
+    CourseAssignment(3, 4),
+
+    CourseAssignment(3, 5),
+    CourseAssignment(4, 5),
 ]
 
 
 def main() -> None:
-    # cвязь один ко многим
-    one_to_many: list[tuple[str, str, str]] = [
-        (comp.name, comp.processor_name, os.name)
-        for os in operating_systems
-        for comp in computers
-        if comp.os_id == os.id
+    # связь один ко многим
+    one_to_many: list[tuple[str, Degree, str]] = [
+        (teacher.name, teacher.academic_degree, department.name)
+        for department in departments
+        for teacher in teachers
+        if teacher.department_id == department.id
     ]
 
     temp: list[tuple[str, int, int]] = [
-        (os.name, s.os_id, s.computer_id)
-        for os in operating_systems
-        for s in servers
-        if os.id == s.os_id
+        (department.name, ca.department_id, ca.teacher_id)
+        for department in departments
+        for ca in course_assignments
+        if department.id == ca.department_id
     ]
 
     # связь многие ко многим
-    many_to_many: list[tuple[str, str, str]] = [
-        (comp.name, comp.processor_name, os_name)
-        for os_name, _, comp_id in temp
-        for comp in computers if comp.id == comp_id
+    many_to_many: list[tuple[str, Degree, str]] = [
+        (teacher.name, teacher.academic_degree, department_name)
+        for department_name, _, teacher_id in temp
+        for teacher in teachers if teacher.id == teacher_id
     ]
 
     print('Задание 1')
-    first_res: list[tuple[str, str]] = find_comps_with_i7(one_to_many)
-    print('Компьютеры с процессорами i7:')
-    for comp_name, os_name in first_res:
-        print(f'{comp_name} - {os_name}')
+    first_res: list[tuple[str, str]] = find_doctors_of_science(one_to_many)
+    print('Преподаватели с ученой степенью:')
+    for teacher_name, department_name in first_res:
+        print(f'{teacher_name} - {department_name}')
     print()
 
     print('Задание 2')
-    second_res: list[tuple[str, str, str]
-                     ] = find_min_linux_and_windows(one_to_many)
-    print('Операционные системы с минимальным именем компьютера:')
-    for os_name, comp_name, processor in second_res:
-        print(f'{os_name}: {comp_name} - {processor}')
+    second_res: list[tuple[str, str]
+                     ] = find_departments_with_candidates(one_to_many)
+    print('Кафедры с преподавателем кандидатами:')
+    for department_name, teacher_name in second_res:
+        print(f'{department_name}: {teacher_name}')
     print()
 
     print('Задание 3')
     third_res = sorted(many_to_many, key=lambda x: (x[2], x[0]))
-    print('Все связанные компьютеры и операционные системы:')
-    for comp_name, processor, os_name in third_res:
-        print(f'{os_name}: {comp_name} - {processor}')
+    print('Все связанные преподаватели и кафедры:')
+    for teacher_name, degree, department_name in third_res:
+        print(f'{department_name}: {teacher_name} - {degree.value}')
 
 
-def find_comps_with_i7(one_to_many: list[tuple[str, str, str]]) -> list[tuple[str, str]]:
-    res: list[tuple[str, str]] = [(comp_name, os_name) for comp_name, processor_name, os_name in one_to_many
-                                  if comp_name.startswith('comp') and 'i7' in processor_name]
+def find_doctors_of_science(one_to_many: list[tuple[str, Degree, str]]) -> list[tuple[str, str]]:
+    res: list[tuple[str, str]] = [
+        (teacher_name, department_name)
+        for teacher_name, degree, department_name in one_to_many
+        if degree.value == Degree.scientist.value
+    ]
 
     return res
 
 
-def find_min_linux_and_windows(one_to_many: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
-    os_computers_dict: dict['str', list[tuple[str, str]]] = {}
+def find_departments_with_candidates(one_to_many: list[tuple[str, Degree, str]]) -> list[tuple[str, str]]:
+    department_candidates_dict: dict[str, list[str]] = {}
 
-    for comp_name, processor_name, os_name in one_to_many:
-        if os_name not in os_computers_dict:
-            os_computers_dict[os_name] = []
+    for teacher_name, degree, department_name in one_to_many:
+        if degree == Degree.candidate:
+            if department_name not in department_candidates_dict:
+                department_candidates_dict[department_name] = []
+            department_candidates_dict[department_name].append(teacher_name)
 
-        os_computers_dict[os_name].append((comp_name, processor_name))
+    res: list[tuple[str, str]] = []
+    for department_name, candidates in sorted(department_candidates_dict.items()):
+        candidates_str = ", ".join(candidates)
+        res.append((department_name, candidates_str))
 
-    res: list[tuple[str, str, str]] = []
-    for os_name, comp_list in os_computers_dict.items():
-        min_comp = min(comp_list, key=lambda x: x[0])
-        res.append((os_name, min_comp[0], min_comp[1]))
-
-    return sorted(res, key=lambda x: x[0])
+    return res
 
 
 if __name__ == '__main__':
